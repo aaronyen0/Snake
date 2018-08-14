@@ -1,18 +1,15 @@
-// test20180814.cpp : 定義主控台應用程式的進入點。
-//
-
-#include "stdafx.h"
-#include <varargs.h>
+//#include <iostream>
 #include <Windows.h>
 #include <conio.h>
-#include "QueueTool.h"
+#include "SnakeQueue.h"
 #include <time.h>
 
 enum eMapType{Space, Snake, Wall, Candy};
 enum eArrow{up, down, left, right, dead};
-static eArrow gArrow = right;
+static eArrow gArrow        = right;
+static eArrow gCurrentArrow = right;
 
-const int gHeight = 35;
+const int gHeight = 30;
 const int gWidth  = 60;
 
 static int gMap[gHeight][gWidth] = {(int)Space};
@@ -47,13 +44,18 @@ void SetWall(int row, int column, char c){
 			gMap[i][0] = (int)Wall;
 			printToCoordinates(i, column - 1, c);
 			gMap[i][column - 1] = (int)Wall;
+			
+			for(int j = 1; j < column - 1; ++j){
+				printToCoordinates(i, j, ' ');
+				gMap[i][j] = (int)Space;
+			}
 		}
 	}
 }
 
 struct Snake* IniGmae(){
 	int x, y;
-	int snakeSize = 8;
+	int snakeSize = 5;
 
 	//設定windows console的buffer
 	COORD coord;
@@ -71,7 +73,9 @@ struct Snake* IniGmae(){
 	x = gHeight / 2;
 	y = gWidth / 2;
 
-	struct Snake* s = CreateSnake(x, y, snakeSize);
+	gArrow = right;
+	gCurrentArrow = right;
+	struct Snake* s = CreateSnake(x, y);
 	printToCoordinates(x, y, '*');
 	for(int i = 0; i < snakeSize -1; ++i){
 		Push(right, s);
@@ -122,7 +126,7 @@ int UpdateSnake(eArrow arrow, struct Snake* snake){
 	int tailX, tailY;
 	int x = snake->head->row;
 	int y = snake->head->col;
-
+	gCurrentArrow = arrow;
 	if(arrow == up){
 		x--;
 	}else if(arrow == down){
@@ -195,30 +199,40 @@ eArrow NextWay(struct Snake* snake){
 	return dead;
 }
 
-int _tmain(int argc, _TCHAR* argv[])
+int main()
 {
 	int rv;
 	eArrow arrow;
 
-	struct Snake* snake = IniGmae();
-	
-
+	struct Snake* snake;
 	CreateThread(NULL, 0, ReadKey, NULL, 0, NULL);
+	
 	while(1){
-		Sleep(100);
-		//Pop(snake);
-		////arrow = NextWay(snake);
-		//
-		//rv = Push(gArrow, snake);
-		rv = UpdateSnake(gArrow, snake);
-		if(rv < 0){
-			printToCoordinates(gHeight / 2, gWidth / 2 - 5, 'G');
-			printf("ame Over");
-			Sleep(300000);
-			break;
+		
+		snake = IniGmae();
+		while(1){
+			Sleep(100);
+			//Pop(snake);
+			////arrow = NextWay(snake);
+			//
+			//rv = Push(gArrow, snake);
+			rv = UpdateSnake(gArrow, snake);
+			if(rv < 0){
+				printToCoordinates(gHeight / 2 - 5, gWidth / 2 - 5, ' ');
+				printf("Game Over");
+				//Sleep(300000);
+				break;
+			}
 		}
+		//printToCoordinates(gHeight, gWidth, ' ');
+		DisposeSnake(snake);
+		Sleep(1000);
+		printToCoordinates(gHeight / 2 -4, gWidth / 2, '3');
+		Sleep(1000);
+		printToCoordinates(gHeight / 2 - 4, gWidth / 2, '2');
+		Sleep(1000);
+		printToCoordinates(gHeight / 2 - 4, gWidth / 2, '1');
 	}
-	//system("pause");
 	return 0;
 }
 
@@ -240,22 +254,22 @@ DWORD WINAPI ReadKey(void* data){
             if(input.Event.KeyEvent.bKeyDown == TRUE)
             {
                 if(input.Event.KeyEvent.wVirtualKeyCode == VK_UP){
-					if(gArrow != down){
+					if(gCurrentArrow != down){
 						gArrow = up;
 					}
 				}
                 else if (input.Event.KeyEvent.wVirtualKeyCode == VK_DOWN){
-                    if(gArrow != up){
+                    if(gCurrentArrow != up){
 						gArrow = down;
 					}
 				}
                 else if (input.Event.KeyEvent.wVirtualKeyCode == VK_LEFT){
-                    if(gArrow != right){
+                    if(gCurrentArrow != right){
 						gArrow = left;
 					}
 				}
                 else if (input.Event.KeyEvent.wVirtualKeyCode == VK_RIGHT){
-                    if(gArrow != left){
+                    if(gCurrentArrow != left){
 						gArrow = right;
 					}
 				}
