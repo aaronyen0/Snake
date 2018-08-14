@@ -3,14 +3,29 @@
 
 struct SnakeBody* CreateSnakeBody(int row, int col);
 
-struct Snake* CreateSnake(int row, int col, int len){
+struct Snake* CreateSnake(int row, int col){
 	struct Snake* snake = (struct Snake*)malloc(sizeof(struct Snake));
 	snake->head = CreateSnakeBody(row, col);
-	for(int i = 1; i < len ; ++i){
-		PushSnakeBody(row, col - i,snake);
-	}
+	//for(int i = 1; i < len ; ++i){
+	//	PushSnakeBody(row, col - i,snake);
+	//}
 
 	return snake;
+}
+
+void DisposeSnake(struct Snake* snake){
+	struct SnakeBody* current, *next;
+	next = snake->head;
+	while(next){
+		current = next;
+		if(current->next){
+			next = current->next;
+		}else{
+			next = NULL;
+		}
+		free(current);
+	}
+	free(snake);
 }
 
 struct SnakeBody* CreateSnakeBody(int row, int col){
