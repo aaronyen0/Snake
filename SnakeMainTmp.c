@@ -8,9 +8,9 @@
 #include "QueueTool.h"
 #include <time.h>
 
-enum eMapType{Space, Snake, Wall};
+enum eMapType{Space, Snake, Wall, Candy};
 enum eArrow{up, down, left, right, dead};
-static eArrow gArrow = up;
+static eArrow gArrow = right;
 
 const int gHeight = 35;
 const int gWidth  = 60;
@@ -18,13 +18,16 @@ const int gWidth  = 60;
 static int gMap[gHeight][gWidth] = {(int)Space};
 
 DWORD WINAPI ReadKey(void* data);
+void Pop(struct Snake* snake);
+int Push(eArrow arrow, struct Snake* snake);
+void UpdateCandy();
 
 void gotoxy(int row, int column)
 {
-  COORD coord;
-  coord.X = column;
-  coord.Y = row;
-  SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+	COORD coord;
+	coord.X = column;
+	coord.Y = row;
+	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
 
 void printToCoordinates(int x, int y, char c){
@@ -63,16 +66,23 @@ struct Snake* IniGmae(){
     BOOL b = SetConsoleWindowInfo(GetStdHandle(STD_OUTPUT_HANDLE), TRUE, &windowSize);	
 	
 	//建立範圍
-	SetWall(gHeight, gWidth, '%');
+	SetWall(gHeight, gWidth, '#');
 
 	x = gHeight / 2;
 	y = gWidth / 2;
 
 	struct Snake* s = CreateSnake(x, y, snakeSize);
-	for(int i = 0; i < snakeSize; ++i){
-		printToCoordinates(x, y - i, '*');
-		gMap[x][y - i] = (int)Snake;
+	printToCoordinates(x, y, '*');
+	for(int i = 0; i < snakeSize -1; ++i){
+		Push(right, s);
 	}
+	srand(time(NULL));
+	UpdateCandy();
+	//for(int i = 1; i < snakeSize; ++i){
+	//	
+	//	printToCoordinates(x, y + i, '*');
+	//	gMap[x][y - i] = (int)Snake;
+	//}
 	return s;
 }
 
@@ -98,7 +108,7 @@ int Push(eArrow arrow, struct Snake* snake){
 		//printf("dead");
 		return -1;
 	}
-	if(gMap[x][y] != (int)Space){
+	if(gMap[x][y] != (int)Space && gMap[x][y] != (int)Candy){
 		return -1;
 	}
 
@@ -106,6 +116,62 @@ int Push(eArrow arrow, struct Snake* snake){
 	printToCoordinates(x, y, '*');
 	gMap[x][y] = (int)Snake;
 	return 0;
+}
+
+int UpdateSnake(eArrow arrow, struct Snake* snake){
+	int tailX, tailY;
+	int x = snake->head->row;
+	int y = snake->head->col;
+
+	if(arrow == up){
+		x--;
+	}else if(arrow == down){
+		x++;
+	}else if(arrow == left){
+		y--;
+	}else if(arrow == right){
+		y++;
+	}else{
+		//printf("dead");
+		return -1;
+	}
+	if(gMap[x][y] != (int)Space && gMap[x][y] != (int)Candy){
+		return -1;
+	}
+
+	if(gMap[x][y] == (int)Space){
+		Pop(snake);
+		Push(arrow, snake);
+	}else if(gMap[x][y] == (int)Candy){
+		Push(arrow, snake);
+		UpdateCandy();
+	}else{
+		return -1;
+	}
+	return 0;
+}
+
+void UpdateCandy(){
+	int row = gHeight - 1;
+	int col = gWidth - 1;
+
+	int x = rand()%((gHeight - 2) * (gWidth - 2));
+	int i = 1, j = 0;
+	while(x > 0){
+		++j;
+		if(gMap[i][j] == (int)Space){
+			--x;
+		}
+		if(j == col){
+			j = 1;
+			++i;
+		}
+		if(i == row){
+			i = 1;
+		}
+	}
+	gMap[i][j] = Candy;
+	printToCoordinates(i, j, '$');
 }
 
 eArrow NextWay(struct Snake* snake){
@@ -135,21 +201,24 @@ int _tmain(int argc, _TCHAR* argv[])
 	eArrow arrow;
 
 	struct Snake* snake = IniGmae();
-	srand(time(NULL));
+	
 
 	CreateThread(NULL, 0, ReadKey, NULL, 0, NULL);
 	while(1){
-		Sleep(500);
-		Pop(snake);
-		//arrow = NextWay(snake);
-		
-		rv = Push(gArrow, snake);
+		Sleep(100);
+		//Pop(snake);
+		////arrow = NextWay(snake);
+		//
+		//rv = Push(gArrow, snake);
+		rv = UpdateSnake(gArrow, snake);
 		if(rv < 0){
-			printf("you dead");
-			Sleep(1000);
+			printToCoordinates(gHeight / 2, gWidth / 2 - 5, 'G');
+			printf("ame Over");
+			Sleep(300000);
 			break;
 		}
 	}
+	//system("pause");
 	return 0;
 }
 
@@ -170,18 +239,30 @@ DWORD WINAPI ReadKey(void* data){
         {
             if(input.Event.KeyEvent.bKeyDown == TRUE)
             {
-                if(input.Event.KeyEvent.wVirtualKeyCode == VK_UP)//大寫鎖定
-                    gArrow = up;
-                else if (input.Event.KeyEvent.wVirtualKeyCode == VK_DOWN)//Enter按鍵
-                    gArrow = down;
-                else if (input.Event.KeyEvent.wVirtualKeyCode == VK_LEFT)//Ctrl
-                    gArrow = left;
-                else if (input.Event.KeyEvent.wVirtualKeyCode == VK_RIGHT)//F4
-                    gArrow = right;
+                if(input.Event.KeyEvent.wVirtualKeyCode == VK_UP){
+					if(gArrow != down){
+						gArrow = up;
+					}
+				}
+                else if (input.Event.KeyEvent.wVirtualKeyCode == VK_DOWN){
+                    if(gArrow != up){
+						gArrow = down;
+					}
+				}
+                else if (input.Event.KeyEvent.wVirtualKeyCode == VK_LEFT){
+                    if(gArrow != right){
+						gArrow = left;
+					}
+				}
+                else if (input.Event.KeyEvent.wVirtualKeyCode == VK_RIGHT){
+                    if(gArrow != left){
+						gArrow = right;
+					}
+				}
             }
         }
 		Sleep(1);
     }
-
+	
     return 0;
 }
