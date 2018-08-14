@@ -12,4 +12,4 @@ struct Snake{
 
 struct Snake* CreateSnake(int row, int col, int len);
 void PushSnakeBody(int row, int col, struct Snake* snake);
-void PopSnakeBody(s
+void PopSnakeBody(struct Snake* snake, int *x, int *y);
