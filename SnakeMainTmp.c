@@ -56,7 +56,7 @@ void SetWall(int row, int column, char c){
 struct Snake* IniGmae(){
 	int x, y;
 	int snakeSize = 5;
-
+	struct Snake* s;
 	//設定windows console的buffer
 	COORD coord;
 	coord.X = gWidth;
@@ -65,7 +65,7 @@ struct Snake* IniGmae(){
 	
 	//設定windows console的windows size
 	SMALL_RECT windowSize = {0, 0, gWidth, gHeight};
-    BOOL b = SetConsoleWindowInfo(GetStdHandle(STD_OUTPUT_HANDLE), TRUE, &windowSize);	
+    	BOOL b = SetConsoleWindowInfo(GetStdHandle(STD_OUTPUT_HANDLE), TRUE, &windowSize);	
 	
 	//建立範圍
 	SetWall(gHeight, gWidth, '#');
@@ -75,12 +75,12 @@ struct Snake* IniGmae(){
 
 	gArrow = right;
 	gCurrentArrow = right;
-	struct Snake* s = CreateSnake(x, y);
+	s = CreateSnake(x, y);
 	printToCoordinates(x, y, '*');
 	for(int i = 0; i < snakeSize -1; ++i){
 		Push(right, s);
 	}
-	srand(time(NULL));
+	srand((unsigned int)time(NULL));
 	UpdateCandy();
 	//for(int i = 1; i < snakeSize; ++i){
 	//	
@@ -123,7 +123,6 @@ int Push(eArrow arrow, struct Snake* snake){
 }
 
 int UpdateSnake(eArrow arrow, struct Snake* snake){
-	int tailX, tailY;
 	int x = snake->head->row;
 	int y = snake->head->col;
 	gCurrentArrow = arrow;
@@ -202,7 +201,7 @@ eArrow NextWay(struct Snake* snake){
 int main()
 {
 	int rv;
-	eArrow arrow;
+	//eArrow arrow;
 
 	struct Snake* snake;
 	CreateThread(NULL, 0, ReadKey, NULL, 0, NULL);
@@ -232,6 +231,7 @@ int main()
 		printToCoordinates(gHeight / 2 - 4, gWidth / 2, '2');
 		Sleep(1000);
 		printToCoordinates(gHeight / 2 - 4, gWidth / 2, '1');
+		Sleep(1000);
 	}
 	return 0;
 }
